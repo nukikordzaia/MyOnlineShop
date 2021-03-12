@@ -8,10 +8,18 @@ class CategorySerializer(ModelSerializer):
         fields = '__all__'
 
 
+# serializer when showing a list
 class ProductSerializer(ModelSerializer):
     class Meta:
         model = Product
         fields = '__all__'
+
+
+# serializer when showing a detail
+class ProductDetSerializer(ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id', 'title', 'slug', 'price']
 
 
 class TagSerializer(ModelSerializer):

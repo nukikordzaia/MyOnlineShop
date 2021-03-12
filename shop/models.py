@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Model, SlugField, DecimalField, CharField, ForeignKey, TextField, BooleanField, ManyToManyField, \
     IntegerField, OneToOneField
+from django.template.defaultfilters import slugify
 
 
 class Category(Model):
@@ -17,13 +18,17 @@ class Category(Model):
 class Product(Model):
     category = ForeignKey(to='shop.Category', on_delete=models.PROTECT)
     title = CharField(max_length=100, blank=False)
-    slug = SlugField(max_length=100)
+    slug = SlugField(max_length=100, blank=True, null=True)
     price = DecimalField(max_digits=5, decimal_places=2, blank=False)
     description = TextField()
     is_published = BooleanField(default=True)
 
     def __str__(self):
         return self.title
+
+    def save(self, *args, **kwargs):
+        self.slug = slugify(self.title)
+        super(Product, self).save(*args, **kwargs)
 
 
 class Tag(Model):
@@ -48,5 +53,3 @@ class CartItem(Model):
 class Cart(Model):
     owner = OneToOneField(to='user.User', on_delete=models.CASCADE)
 
-    def __str__(self):
-        return self.owner
