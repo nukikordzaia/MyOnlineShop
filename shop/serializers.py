@@ -1,3 +1,5 @@
+from django.db.models import ExpressionWrapper, F, DecimalField, Sum
+from rest_framework.fields import SerializerMethodField
 from rest_framework.serializers import ModelSerializer
 from shop.models import Category, Product, Cart, CartItem, Tag
 
@@ -34,7 +36,20 @@ class CartItemSerializer(ModelSerializer):
         fields = '__all__'
 
 
+class CartItemDetSerializer(ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['quantity', ]
+
+
 class CartSerializer(ModelSerializer):
+    total_cost = SerializerMethodField()
+    items = CartItemSerializer(many=True)
+
     class Meta:
         model = Cart
         fields = '__all__'
+
+    @staticmethod
+    def get_total_cost(obj: Cart):
+        return obj.get_total_price()

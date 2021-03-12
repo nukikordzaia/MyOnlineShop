@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 from django.db import models
-from django.db.models import Model, SlugField, DecimalField, CharField, ForeignKey, TextField, BooleanField, ManyToManyField, \
-    IntegerField, OneToOneField
+from django.db.models import Model, SlugField, DecimalField, CharField, ForeignKey, TextField, BooleanField, \
+    ManyToManyField, \
+    IntegerField, OneToOneField, ExpressionWrapper, F, Sum
 from django.template.defaultfilters import slugify
 
 
@@ -53,3 +56,11 @@ class CartItem(Model):
 class Cart(Model):
     owner = OneToOneField(to='user.User', on_delete=models.CASCADE)
 
+    def get_total_price(self) -> Decimal:
+        return self.items.annotate(
+            price=ExpressionWrapper(
+                F('product__price') * F('quantity'), output_field=DecimalField()
+            )
+        ).aggregate(
+            total_cost=Sum('price')
+        )['total_cost'] or Decimal(0)
