@@ -1,4 +1,6 @@
 import json
+
+from django.db.models import Max
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import  status
 from rest_framework.filters import SearchFilter
@@ -7,10 +9,12 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
-from shop.models import Category, Product, Cart
+
+import user
+from shop.models import Category, Product, Cart, CartItem
 from shop.permissions import IsAdmin
-from shop.serializers import CategorySerializer, ProductSerializer, ProductDetSerializer, CartSerializer,\
-    CartItemDetSerializer
+from shop.serializers import CategorySerializer, ProductSerializer, ProductDetSerializer, CartSerializer, \
+    CartItemDetSerializer, OrderSerializer
 
 
 class CategoryList(ListCreateAPIView):
@@ -40,9 +44,11 @@ class ProductViewSet(ModelViewSet):
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated], url_path='addToCart')
     def add_to_cart(self, request, **_):
+
+        max_order = request.user.cart.items.aggregate(maximum_order=Max('order')).get('maximum_order')
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(product=self.get_object(), cart_id=self.request.user.cart.pk)
+        serializer.save(product=self.get_object(), cart_id=self.request.user.cart.pk, order=max_order+1)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -68,6 +74,29 @@ class CartViewSet(ModelViewSet):
         )
 
         return Response(response, status=response.status_code)
+
+    @action(detail=False, methods=['post'], permission_classes=[IsAuthenticated])
+    def reorder_items(self, request):
+        serializer = OrderSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        l = []
+        for order, item in enumerate(serializer.validated_data, start=1):
+            print(order, item)
+            cartitem = CartItem(id=item['id'], order=order)
+            l.append(cartitem)
+        CartItem.objects.bulk_update(l, ['order'])
+
+        return Response()
+
+
+
+
+
+
+
+
+
+
 
 
 

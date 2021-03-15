@@ -3,7 +3,7 @@ from decimal import Decimal
 from django.db import models
 from django.db.models import Model, SlugField, DecimalField, CharField, ForeignKey, TextField, BooleanField, \
     ManyToManyField, \
-    IntegerField, OneToOneField, ExpressionWrapper, F, Sum
+    IntegerField, OneToOneField, ExpressionWrapper, F, Sum, PositiveIntegerField
 from django.template.defaultfilters import slugify
 
 
@@ -51,6 +51,10 @@ class CartItem(Model):
     cart = ForeignKey(to='shop.Cart', related_name='items', blank=False, on_delete=models.PROTECT)
     quantity = IntegerField()
     active = BooleanField(default=True)
+    order = PositiveIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order', ]
 
 
 class Cart(Model):
