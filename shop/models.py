@@ -1,5 +1,4 @@
 from decimal import Decimal
-
 from django.db import models
 from django.db.models import Model, SlugField, DecimalField, CharField, ForeignKey, TextField, BooleanField, \
     ManyToManyField, \
@@ -20,6 +19,7 @@ class Category(Model):
 
 class Product(Model):
     category = ForeignKey(to='shop.Category', on_delete=models.PROTECT)
+    tags = ManyToManyField(to='shop.Tag', related_name='products', null=True, blank=True)
     title = CharField(max_length=100, blank=False)
     slug = SlugField(max_length=100, blank=True, null=True)
     price = DecimalField(max_digits=5, decimal_places=2, blank=False)
@@ -36,11 +36,6 @@ class Product(Model):
 
 class Tag(Model):
     title = CharField(max_length=100, blank=False)
-    products = ManyToManyField(
-        to='shop.Product',
-        related_name='tags',
-        blank=True,
-    )
 
     def __str__(self):
         return self.title
@@ -68,3 +63,5 @@ class Cart(Model):
         ).aggregate(
             total_cost=Sum('price')
         )['total_cost'] or Decimal(0)
+
+

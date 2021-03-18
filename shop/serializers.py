@@ -1,4 +1,6 @@
-from django.db.models import ExpressionWrapper, F, DecimalField, Sum
+from typing import List
+
+from django.db import transaction
 from rest_framework.fields import SerializerMethodField, IntegerField
 from rest_framework.serializers import ModelSerializer, Serializer
 from shop.models import Category, Product, Cart, CartItem, Tag
@@ -10,24 +12,39 @@ class CategorySerializer(ModelSerializer):
         fields = '__all__'
 
 
-# serializer when showing a list
+class TagSerializer(ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['title']
+
+
 class ProductSerializer(ModelSerializer):
+    tags = TagSerializer(many=True, required=False)
+
     class Meta:
         model = Product
         fields = '__all__'
+
+    def create(self, validated_data):
+        with transaction.atomic():
+            tags_data = validated_data.pop('tags', [])
+            product = super().create(validated_data)
+            tag_list: List[Tag] = [
+                Tag(**tag)
+                for tag in tags_data
+            ]
+            if tag_list:
+                Tag.objects.bulk_create(tag_list)
+                product.tags.add(*tag_list)
+
+        return product
 
 
 # serializer when showing a detail
 class ProductDetSerializer(ModelSerializer):
     class Meta:
         model = Product
-        fields = ['id', 'title', 'slug', 'price']
-
-
-class TagSerializer(ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = '__all__'
+        fields = ['id', 'title', 'slug', 'price', 'tag']
 
 
 class CartItemSerializer(ModelSerializer):

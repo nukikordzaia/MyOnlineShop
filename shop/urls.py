@@ -4,6 +4,7 @@ from shop import views
 
 router = DefaultRouter()
 router.register(r'products', views.ProductViewSet)
+router.register(r'tags', views.TagViewSet)
 router.register(r'cart', views.CartViewSet)
 
 
