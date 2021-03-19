@@ -36,7 +36,6 @@ class ProductSerializer(ModelSerializer):
             if tag_list:
                 Tag.objects.bulk_create(tag_list)
                 product.tags.add(*tag_list)
-
         return product
 
 
